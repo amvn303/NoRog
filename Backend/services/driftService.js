@@ -1,17 +1,12 @@
-// ============================================================
-// Drift Detection Engine
-// Analyzes last 3-5 history records to detect symptom trends
-// ============================================================
-
-import { getHistory } from "./historyService.js";
+import { getPredictionHistory } from "./historyService.js";
 
 /**
  * Detect drift (trend) in recent health history.
  * Analyzes symptom recurrence, condition stability, and risk trajectory.
  * @returns {Object} - Drift analysis with direction, severity, and message
  */
-export const detectDrift = () => {
-  const history = getHistory();
+export const detectDrift = async ({ userId, profileId }) => {
+  const history = await getPredictionHistory({ userId, profileId, limit: 5 });
 
   if (history.length < 2) {
     return {
@@ -41,13 +36,13 @@ export const detectDrift = () => {
     }
 
     // Track conditions
-    if (record.result && record.result.prediction && record.result.prediction.primary) {
-      conditionHistory.push(record.result.prediction.primary);
+    if (record.normalizedConditions?.length) {
+      conditionHistory.push(record.normalizedConditions[0].name);
     }
 
     // Track risk levels
-    if (record.result && record.result.behaviorAnalysis) {
-      riskLevels.push(record.result.behaviorAnalysis.riskLevel);
+    if (record.behaviorAnalysis) {
+      riskLevels.push(record.behaviorAnalysis.riskLevel);
     }
   }
 

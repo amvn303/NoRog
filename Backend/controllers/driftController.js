@@ -4,9 +4,17 @@
 
 import { detectDrift } from "../services/driftService.js";
 
-export const fetchDrift = (req, res) => {
+export const fetchDrift = async (req, res) => {
+  const { userId, profileId } = req.query;
+  if (!userId || !profileId) {
+    return res.status(400).json({
+      success: false,
+      error: "userId and profileId are required."
+    });
+  }
+
   try {
-    const drift = detectDrift();
+    const drift = await detectDrift({ userId, profileId });
 
     return res.json({
       success: true,

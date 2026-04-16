@@ -1,48 +1,49 @@
-// ============================================================
-// Enhanced History Service
-// In-memory store with full prediction results and timestamps
-// ============================================================
+import PredictionRecord from "../models/PredictionRecord.js";
+import SimulationRecord from "../models/SimulationRecord.js";
+import ChatSession from "../models/ChatSession.js";
 
-const MAX_HISTORY = 50;
-const history = [];
-
-/**
- * Add an entry to history.
- * @param {Object} entry - { symptoms, behaviors, goal, result, time }
- */
-export const addHistory = (entry) => {
-  history.push({
-    id: history.length + 1,
-    ...entry,
-    time: entry.time || new Date()
+export const addPredictionHistory = async ({
+  userId,
+  profileId,
+  symptoms,
+  source,
+  normalizedConditions,
+  confidence,
+  behaviorAnalysis,
+  causeEffectChain,
+  recommendations,
+  rawApiResponse
+}) => {
+  return PredictionRecord.create({
+    userId,
+    profileId,
+    symptoms,
+    source,
+    normalizedConditions,
+    confidence,
+    behaviorAnalysis,
+    causeEffectChain,
+    recommendations,
+    rawApiResponse
   });
-
-  // Keep only the latest entries
-  if (history.length > MAX_HISTORY) {
-    history.shift();
-  }
 };
 
-/**
- * Get the last N history entries (default 10).
- * @param {number} limit - Number of entries to return
- * @returns {Array}
- */
-export const getHistory = (limit = 50) => {
-  return history.slice(-limit);
+export const addSimulationHistory = async ({ userId, profileId, condition, toggles, result }) => {
+  return SimulationRecord.create({ userId, profileId, condition, toggles, result });
 };
 
-/**
- * Get the most recent entry.
- * @returns {Object|null}
- */
-export const getLatestEntry = () => {
-  return history.length > 0 ? history[history.length - 1] : null;
+export const getPredictionHistory = async ({ userId, profileId, limit = 50 }) => {
+  return PredictionRecord.find({ userId, profileId })
+    .sort({ createdAt: -1 })
+    .limit(limit)
+    .lean();
 };
 
-/**
- * Clear all history (useful for testing).
- */
-export const clearHistory = () => {
-  history.length = 0;
+export const getLatestPrediction = async ({ userId, profileId }) => {
+  return PredictionRecord.findOne({ userId, profileId }).sort({ createdAt: -1 }).lean();
+};
+
+export const getChatHistory = async ({ userId, profileId }) => {
+  const session = await ChatSession.findOne({ userId, profileId }).lean();
+  return session?.messages || [];
 };

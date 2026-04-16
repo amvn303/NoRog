@@ -1,20 +1,36 @@
-// ============================================================
-// Personal Health Profile Engine
-// Aggregates history to generate a comprehensive health profile
-// ============================================================
-
-import { getHistory } from "./historyService.js";
+import HealthProfile from "../models/HealthProfile.js";
+import { getPredictionHistory } from "./historyService.js";
 
 /**
  * Generate a user health profile from history.
  * @returns {Object} - Aggregated health profile
  */
-export const getProfile = () => {
-  const history = getHistory();
+export const getProfile = async ({ userId, profileId }) => {
+  const [profileDoc, history] = await Promise.all([
+    HealthProfile.findOne({ _id: profileId, userId }).lean(),
+    getPredictionHistory({ userId, profileId, limit: 50 })
+  ]);
 
-  if (history.length === 0) {
+  if (!profileDoc) {
+    return {
+      profile: null,
+      recurring_symptoms: [],
+      condition_history: [],
+      confidence: "Low",
+      explanation: "Profile not found."
+    };
+  }
+
+  if (!history || history.length === 0) {
     return {
       profile: {
+        profileId: String(profileDoc._id),
+        displayName: profileDoc.displayName,
+        relation: profileDoc.label,
+        age: profileDoc.age ?? null,
+        habits: profileDoc.habits || {},
+        lifestyle: profileDoc.lifestyle || [],
+        pastConditions: profileDoc.pastConditions || [],
         dominant_issue: "No data available",
         trend: "unknown",
         risk_level: "unknown",
@@ -41,14 +57,14 @@ export const getProfile = () => {
     }
 
     // Count conditions
-    if (record.result && record.result.prediction && record.result.prediction.primary) {
-      const cond = record.result.prediction.primary;
+    if (record.normalizedConditions?.length) {
+      const cond = record.normalizedConditions[0].name;
       conditionFrequency[cond] = (conditionFrequency[cond] || 0) + 1;
     }
 
     // Collect risk levels
-    if (record.result && record.result.behaviorAnalysis) {
-      riskLevels.push(record.result.behaviorAnalysis.riskLevel);
+    if (record.behaviorAnalysis) {
+      riskLevels.push(record.behaviorAnalysis.riskLevel);
     }
   }
 
@@ -91,6 +107,13 @@ export const getProfile = () => {
 
   return {
     profile: {
+      profileId: String(profileDoc._id),
+      displayName: profileDoc.displayName,
+      relation: profileDoc.label,
+      age: profileDoc.age ?? null,
+      habits: profileDoc.habits || {},
+      lifestyle: profileDoc.lifestyle || [],
+      pastConditions: profileDoc.pastConditions || [],
       dominant_issue: dominantCondition,
       trend,
       risk_level: overallRisk,

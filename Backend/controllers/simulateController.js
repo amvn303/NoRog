@@ -3,9 +3,10 @@
 // ============================================================
 
 import { getSimulation } from "../services/simulationService.js";
+import { addSimulationHistory } from "../services/historyService.js";
 
-export const simulateChange = (req, res) => {
-  const { condition, behaviors } = req.body;
+export const simulateChange = async (req, res) => {
+  const { userId, profileId, condition, behaviors, toggles } = req.body;
 
   console.log("POST /api/simulate request:", JSON.stringify(req.body));
 
@@ -17,12 +18,22 @@ export const simulateChange = (req, res) => {
   }
 
   try {
-    const simulation = getSimulation(condition, behaviors || {});
+    const simulation = getSimulation(condition, behaviors || {}, toggles || {});
+
+    if (userId && profileId) {
+      await addSimulationHistory({
+        userId,
+        profileId,
+        condition,
+        toggles: toggles || {},
+        result: simulation
+      });
+    }
 
     return res.json({
       success: true,
       data: simulation,
-      disclaimer: "Simulations are generalised projections based on health patterns, not individual medical predictions."
+      disclaimer: "Simulations indicate possible trajectories and inferred changes, not individual medical predictions."
     });
   } catch (error) {
     console.error("POST /api/simulate error:", error.message);

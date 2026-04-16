@@ -1,8 +1,16 @@
 import express from "express";
-import { fetchProfile } from "../controllers/profileController.js";
+import {
+  bootstrapUser,
+  createProfile,
+  fetchProfile,
+  fetchProfiles
+} from "../controllers/profileController.js";
 
 const router = express.Router();
 
+router.post("/users/bootstrap", bootstrapUser);
+router.get("/profiles", fetchProfiles);
+router.post("/profiles", createProfile);
 router.get("/profile", fetchProfile);
 
 export default router;

@@ -2,13 +2,20 @@
 // History Controller — Returns recent history entries
 // ============================================================
 
-import { getHistory } from "../services/historyService.js";
+import { getPredictionHistory } from "../services/historyService.js";
 
-export const fetchHistory = (req, res) => {
-  const limit = parseInt(req.query.limit) || 10;
+export const fetchHistory = async (req, res) => {
+  const limit = parseInt(req.query.limit, 10) || 10;
+  const { userId, profileId } = req.query;
+  if (!userId || !profileId) {
+    return res.status(400).json({
+      success: false,
+      error: "userId and profileId are required."
+    });
+  }
 
   return res.json({
     success: true,
-    data: getHistory().slice(-limit).reverse()
+    data: await getPredictionHistory({ userId, profileId, limit })
   });
 };

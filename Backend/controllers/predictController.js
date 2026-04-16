@@ -6,10 +6,10 @@ import { getPrediction } from "../services/predictionService.js";
 import { analyzeBehavior } from "../services/behaviorService.js";
 import { getCauseEffectChain } from "../services/causeEffectService.js";
 import { getRecommendations } from "../services/recommendationService.js";
-import { addHistory } from "../services/historyService.js";
+import { addPredictionHistory } from "../services/historyService.js";
 
 export const predictDisease = async (req, res) => {
-  const { symptoms, behaviors, goal } = req.body;
+  const { userId, profileId, symptoms, behaviors, goal } = req.body;
 
   console.log("POST /api/predict request:", JSON.stringify(req.body));
 
@@ -30,17 +30,17 @@ export const predictDisease = async (req, res) => {
 
   try {
     // 1. Prediction Engine
-    const prediction = getPrediction(symptoms);
+    const prediction = await getPrediction(symptoms);
 
     // 2. Behavior Intelligence Engine
     const behaviorAnalysis = analyzeBehavior(behaviors || {});
 
     // 3. Cause-Effect-Outcome Engine
-    const causeEffectChain = getCauseEffectChain(prediction.primary);
+    const causeEffectChain = getCauseEffectChain(prediction.primary || "default");
 
     // 4. Context-Aware Recommendations
     const recommendations = getRecommendations(
-      prediction.primary,
+      prediction.primary || "general wellness pattern",
       behaviorAnalysis,
       goal || "general wellness"
     );
@@ -52,24 +52,30 @@ export const predictDisease = async (req, res) => {
       causeEffectChain,
       recommendations,
       confidence: prediction.confidence,
-      explanation: `Analysis based on ${symptoms.length} symptom(s)${behaviors ? " and behavioral data" : ""}. ${prediction.explanation}`
+      explanation: `Analysis based on ${symptoms.length} symptom(s)${behaviors ? " and behavior context" : ""}. ${prediction.explanation}`
     };
 
-    // Save to history
-    addHistory({
-      symptoms,
-      behaviors: behaviors || {},
-      goal: goal || "general wellness",
-      result,
-      time: new Date()
-    });
+    if (userId && profileId) {
+      await addPredictionHistory({
+        userId,
+        profileId,
+        symptoms,
+        source: prediction.source,
+        normalizedConditions: prediction.normalizedConditions || [],
+        confidence: prediction.confidence,
+        behaviorAnalysis,
+        causeEffectChain,
+        recommendations,
+        rawApiResponse: prediction.rawApiResponse
+      });
+    }
 
     console.log("POST /api/predict — primary:", prediction.primary, "confidence:", prediction.confidence);
 
     return res.status(200).json({
       success: true,
       data: result,
-      disclaimer: "This is not a medical diagnosis. Results are based on pattern matching and behavioral analysis. Please consult a healthcare professional for medical advice."
+      disclaimer: "This is not a medical diagnosis. It suggests likely patterns and inferred behavior risks. Please consult a healthcare professional for clinical advice."
     });
 
   } catch (error) {

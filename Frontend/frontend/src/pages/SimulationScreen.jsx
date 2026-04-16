@@ -16,21 +16,31 @@ const timeframeIcons = {
   '10yr': '🏛️'
 }
 
-export default function SimulationScreen({ result, behaviors }) {
+export default function SimulationScreen({ result, behaviors, userContext, activeProfile }) {
   const navigate = useNavigate()
   const [simulation, setSimulation] = useState(null)
   const [loading, setLoading] = useState(false)
   const [activeTimeframe, setActiveTimeframe] = useState('1m')
   const [error, setError] = useState('')
+  const [toggles, setToggles] = useState({
+    meditation: true,
+    reduceScreenTime: true,
+    improveSleep: true
+  })
 
   const condition = result?.prediction?.primary
 
-  useEffect(() => {
-    if (!condition) return
-    const fetchSimulation = async () => {
+  const fetchSimulation = async () => {
+      if (!condition) return
       setLoading(true)
       try {
-        const res = await postSimulate(condition, behaviors || {})
+        const res = await postSimulate({
+          userId: userContext?.userId,
+          profileId: activeProfile?.id,
+          condition,
+          behaviors: behaviors || {},
+          toggles
+        })
         if (res.success) {
           setSimulation(res.data)
         } else {
@@ -42,8 +52,11 @@ export default function SimulationScreen({ result, behaviors }) {
         setLoading(false)
       }
     }
+
+  useEffect(() => {
+    if (!condition) return
     fetchSimulation()
-  }, [condition, behaviors])
+  }, [condition, behaviors, userContext, activeProfile, toggles])
 
   if (!condition) {
     return (
@@ -77,7 +90,10 @@ export default function SimulationScreen({ result, behaviors }) {
 
   if (!simulation) return null
 
-  const sim = simulation.simulation
+  const sim = {
+    withChange: simulation.withChange,
+    withoutChange: simulation.withoutChange
+  }
 
   return (
     <div className="space-y-6 animate-fade-in-up">
@@ -103,6 +119,15 @@ export default function SimulationScreen({ result, behaviors }) {
       </div>
 
       {/* Comparison Cards */}
+      <div className="glass-card p-4">
+        <h3 className="font-semibold mb-3">Try lifestyle changes</h3>
+        <div className="flex flex-wrap gap-2">
+          <button className={`symptom-chip text-xs ${toggles.meditation ? 'selected' : ''}`} onClick={() => setToggles((t) => ({ ...t, meditation: !t.meditation }))}>Meditation</button>
+          <button className={`symptom-chip text-xs ${toggles.reduceScreenTime ? 'selected' : ''}`} onClick={() => setToggles((t) => ({ ...t, reduceScreenTime: !t.reduceScreenTime }))}>Reduce screen time</button>
+          <button className={`symptom-chip text-xs ${toggles.improveSleep ? 'selected' : ''}`} onClick={() => setToggles((t) => ({ ...t, improveSleep: !t.improveSleep }))}>Improve sleep</button>
+        </div>
+      </div>
+
       <div className="grid md:grid-cols-2 gap-5">
         {/* With Intervention */}
         <div className="glass-card p-6 border-t-4 border-t-[var(--color-success)] animate-fade-in-up stagger-1" style={{ opacity: 0 }}>
@@ -168,6 +193,9 @@ export default function SimulationScreen({ result, behaviors }) {
         <div className="glass-card p-5 border-l-4 border-l-[var(--color-warning)] animate-fade-in-up stagger-3" style={{ opacity: 0 }}>
           <p className="text-sm text-[var(--color-text-secondary)]">
             <span className="text-[var(--color-warning)] font-semibold">📋 Context:</span> {simulation.behaviorContext}
+          </p>
+          <p className="text-sm text-[var(--color-brand-light)] mt-2">
+            <span className="font-semibold">Comparison:</span> {simulation.comparison}
           </p>
         </div>
       )}

@@ -1,10 +1,12 @@
 import { BrowserRouter, Routes, Route, NavLink, useLocation } from 'react-router-dom'
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Dashboard from './pages/Dashboard'
 import InputScreen from './pages/InputScreen'
 import ResultScreen from './pages/ResultScreen'
 import SimulationScreen from './pages/SimulationScreen'
 import ProfileScreen from './pages/ProfileScreen'
+import ChatScreen from './pages/ChatScreen'
+import { bootstrapUser, createProfile } from './api/client'
 
 function Navbar() {
   const location = useLocation()
@@ -12,6 +14,7 @@ function Navbar() {
 
   const links = [
     { to: '/', label: 'Dashboard', icon: '🏠' },
+    { to: '/chat', label: 'Chat', icon: '💬' },
     { to: '/analyze', label: 'Analyze', icon: '🩺' },
     { to: '/profile', label: 'Profile', icon: '📊' },
   ]
@@ -81,17 +84,76 @@ function Navbar() {
 function App() {
   const [lastResult, setLastResult] = useState(null)
   const [lastBehaviors, setLastBehaviors] = useState(null)
+  const [userContext, setUserContext] = useState(null)
+  const [profiles, setProfiles] = useState([])
+  const [activeProfileId, setActiveProfileId] = useState('')
+
+  useEffect(() => {
+    const init = async () => {
+      const existingExternalId = localStorage.getItem('norog_external_id') || `local-${Date.now()}`
+      localStorage.setItem('norog_external_id', existingExternalId)
+      const res = await bootstrapUser(existingExternalId, 'NoRog User')
+      if (res.success) {
+        const userId = res.data.user.id
+        const loadedProfiles = res.data.profiles || []
+        setUserContext({ userId, externalId: existingExternalId, name: res.data.user.name })
+        setProfiles(loadedProfiles)
+        if (loadedProfiles.length) {
+          setActiveProfileId(loadedProfiles[0].id)
+        }
+      }
+    }
+    init()
+  }, [])
+
+  const activeProfile = useMemo(
+    () => profiles.find((p) => p.id === activeProfileId) || null,
+    [profiles, activeProfileId]
+  )
+
+  const addFamilyProfile = async () => {
+    if (!userContext?.userId) return
+    const name = prompt('Profile name (e.g., Father):')
+    if (!name) return
+    const relation = prompt('Relation (self/father/mother/sibling/other):', 'other') || 'other'
+    const res = await createProfile({
+      userId: userContext.userId,
+      label: relation,
+      displayName: name
+    })
+    if (res.success) {
+      const next = [...profiles, res.data]
+      setProfiles(next)
+      setActiveProfileId(res.data.id)
+    }
+  }
 
   return (
     <BrowserRouter>
       <Navbar />
       <main className="pt-20 pb-8 px-4 max-w-6xl mx-auto min-h-screen">
+        <div className="glass-card p-3 mb-4 flex flex-wrap items-center gap-2">
+          <span className="text-xs text-[var(--color-text-muted)]">Active profile</span>
+          <select
+            value={activeProfileId}
+            onChange={(e) => setActiveProfileId(e.target.value)}
+            className="bg-[var(--color-bg-surface-alt)] border border-[var(--color-border)] rounded-lg px-3 py-1.5 text-sm"
+          >
+            {profiles.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.displayName} ({p.label})
+              </option>
+            ))}
+          </select>
+          <button onClick={addFamilyProfile} className="btn-secondary text-xs py-2 px-3">+ Add family profile</button>
+        </div>
         <Routes>
-          <Route path="/" element={<Dashboard lastResult={lastResult} />} />
-          <Route path="/analyze" element={<InputScreen onResult={(r, b) => { setLastResult(r); setLastBehaviors(b); }} />} />
+          <Route path="/" element={<Dashboard lastResult={lastResult} userContext={userContext} activeProfile={activeProfile} />} />
+          <Route path="/chat" element={<ChatScreen userContext={userContext} activeProfile={activeProfile} onResult={(r, b) => { setLastResult(r); setLastBehaviors(b); }} />} />
+          <Route path="/analyze" element={<InputScreen userContext={userContext} activeProfile={activeProfile} onResult={(r, b) => { setLastResult(r); setLastBehaviors(b); }} />} />
           <Route path="/results" element={<ResultScreen result={lastResult} />} />
-          <Route path="/simulation" element={<SimulationScreen result={lastResult} behaviors={lastBehaviors} />} />
-          <Route path="/profile" element={<ProfileScreen />} />
+          <Route path="/simulation" element={<SimulationScreen userContext={userContext} activeProfile={activeProfile} result={lastResult} behaviors={lastBehaviors} />} />
+          <Route path="/profile" element={<ProfileScreen userContext={userContext} activeProfile={activeProfile} />} />
         </Routes>
       </main>
 

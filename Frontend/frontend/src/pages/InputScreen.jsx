@@ -21,7 +21,7 @@ const GOALS = [
   { value: 'better sleep', label: '😴 Better Sleep' },
 ]
 
-export default function InputScreen({ onResult }) {
+export default function InputScreen({ onResult, userContext, activeProfile }) {
   const navigate = useNavigate()
   const location = useLocation()
   const [selectedSymptoms, setSelectedSymptoms] = useState([])
@@ -63,7 +63,13 @@ export default function InputScreen({ onResult }) {
       const cleanBehaviors = Object.fromEntries(
         Object.entries(behaviors).filter(([, v]) => v !== '')
       )
-      const res = await postPredict(selectedSymptoms, cleanBehaviors, goal)
+      const res = await postPredict({
+        userId: userContext?.userId,
+        profileId: activeProfile?.id,
+        symptoms: selectedSymptoms,
+        behaviors: cleanBehaviors,
+        goal
+      })
       if (res.success) {
         onResult(res.data, cleanBehaviors)
         navigate('/results')

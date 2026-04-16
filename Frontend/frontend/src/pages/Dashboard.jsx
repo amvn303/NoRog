@@ -4,16 +4,25 @@ import { getHistory, getDrift } from '../api/client'
 
 const quickSymptoms = ['headache', 'fatigue', 'insomnia', 'anxiety', 'brain fog', 'back pain']
 
-export default function Dashboard({ lastResult }) {
+export default function Dashboard({ lastResult, userContext, activeProfile }) {
   const navigate = useNavigate()
   const [history, setHistory] = useState([])
   const [drift, setDrift] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [previewToggles, setPreviewToggles] = useState({
+    meditation: false,
+    reduceScreenTime: false,
+    improveSleep: false
+  })
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [histRes, driftRes] = await Promise.all([getHistory(5), getDrift()])
+        if (!userContext?.userId || !activeProfile?.id) return
+        const [histRes, driftRes] = await Promise.all([
+          getHistory({ userId: userContext.userId, profileId: activeProfile.id, limit: 5 }),
+          getDrift({ userId: userContext.userId, profileId: activeProfile.id })
+        ])
         setHistory(histRes.data || [])
         setDrift(driftRes.data || null)
       } catch (e) {
@@ -23,12 +32,14 @@ export default function Dashboard({ lastResult }) {
       }
     }
     fetchData()
-  }, [lastResult])
+  }, [lastResult, userContext, activeProfile])
+
+  const previewScore = Object.values(previewToggles).filter(Boolean).length
 
   const latestResult = lastResult || (history.length > 0 ? history[0].result : null)
-  const latestPrimary = latestResult?.prediction?.primary
-  const latestConfidence = latestResult?.prediction?.confidence
-  const riskLevel = latestResult?.behaviorAnalysis?.riskLevel || drift?.severity || 'unknown'
+  const latestPrimary = latestResult?.prediction?.primary || history?.[0]?.normalizedConditions?.[0]?.name
+  const latestConfidence = latestResult?.prediction?.confidence || history?.[0]?.confidence
+  const riskLevel = latestResult?.behaviorAnalysis?.riskLevel || history?.[0]?.behaviorAnalysis?.riskLevel || drift?.severity || 'unknown'
 
   return (
     <div className="space-y-6 animate-fade-in-up">
@@ -43,11 +54,31 @@ export default function Dashboard({ lastResult }) {
           <p className="text-[var(--color-text-secondary)] text-lg max-w-xl">
             Your AI-powered behavioral health intelligence system. Predict, understand, and evolve.
           </p>
-          <button onClick={() => navigate('/analyze')}
+          <button onClick={() => navigate('/chat')}
                   className="btn-primary mt-6 text-base">
-            🩺 Start Health Analysis
+            💬 Start Chat Onboarding
           </button>
         </div>
+      </div>
+
+      <div className="glass-card p-6">
+        <h2 className="text-sm font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider mb-3">
+          Try lifestyle changes (instant preview)
+        </h2>
+        <div className="flex flex-wrap gap-2 mb-3">
+          <button className={`symptom-chip text-xs ${previewToggles.meditation ? 'selected' : ''}`} onClick={() => setPreviewToggles((t) => ({ ...t, meditation: !t.meditation }))}>Meditation</button>
+          <button className={`symptom-chip text-xs ${previewToggles.reduceScreenTime ? 'selected' : ''}`} onClick={() => setPreviewToggles((t) => ({ ...t, reduceScreenTime: !t.reduceScreenTime }))}>Screen time low</button>
+          <button className={`symptom-chip text-xs ${previewToggles.improveSleep ? 'selected' : ''}`} onClick={() => setPreviewToggles((t) => ({ ...t, improveSleep: !t.improveSleep }))}>Sleep improved</button>
+        </div>
+        <p className="text-sm text-[var(--color-text-secondary)]">
+          {previewScore === 0
+            ? 'Without change: system infers risk can increase over 1 month, 1 year, and 5 years.'
+            : previewScore === 1
+            ? 'With one change: system infers small risk reduction in future trend.'
+            : previewScore === 2
+            ? 'With two changes: system infers meaningful risk reduction trajectory.'
+            : 'With all three changes: system infers strong long-term protective trend.'}
+        </p>
       </div>
 
       <div className="grid md:grid-cols-3 gap-5">
@@ -135,20 +166,20 @@ export default function Dashboard({ lastResult }) {
                 <div className="flex items-center gap-3">
                   <span className="text-lg">🩺</span>
                   <div>
-                    <div className="font-medium text-sm">{entry.result?.prediction?.primary || 'Unknown'}</div>
+                     <div className="font-medium text-sm">{entry.normalizedConditions?.[0]?.name || 'Unknown'}</div>
                     <div className="text-xs text-[var(--color-text-muted)]">
                       {entry.symptoms?.slice(0, 3).join(', ')}{entry.symptoms?.length > 3 ? '...' : ''}
                     </div>
                   </div>
                 </div>
                 <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-                  entry.result?.prediction?.confidence === 'High' ? 'bg-[rgba(0,184,148,0.15)] text-[var(--color-success)]' :
-                  entry.result?.prediction?.confidence === 'Moderate' ? 'bg-[rgba(253,203,110,0.15)] text-[var(--color-warning)]' :
-                  'bg-[rgba(225,112,85,0.15)] text-[var(--color-danger)]'
-                }`}>
-                  {entry.result?.prediction?.confidence || '?'}
-                </span>
-              </div>
+                   entry.confidence === 'High' ? 'bg-[rgba(0,184,148,0.15)] text-[var(--color-success)]' :
+                   entry.confidence === 'Moderate' ? 'bg-[rgba(253,203,110,0.15)] text-[var(--color-warning)]' :
+                   'bg-[rgba(225,112,85,0.15)] text-[var(--color-danger)]'
+                 }`}>
+                   {entry.confidence || '?'}
+                 </span>
+               </div>
             ))}
           </div>
         </div>

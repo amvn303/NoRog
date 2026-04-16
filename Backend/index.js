@@ -1,14 +1,19 @@
 import express from "express";
 import cors from "cors";
+import dotenv from "dotenv";
 
 import predictRoutes from "./routes/predict.js";
 import simulateRoutes from "./routes/simulate.js";
 import historyRoutes from "./routes/history.js";
 import driftRoutes from "./routes/drift.js";
 import profileRoutes from "./routes/profile.js";
+import chatRoutes from "./routes/chat.js";
+import { connectDB } from "./config/db.js";
+
+dotenv.config();
 
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors());
@@ -26,6 +31,7 @@ app.use("/api", simulateRoutes);
 app.use("/api", historyRoutes);
 app.use("/api", driftRoutes);
 app.use("/api", profileRoutes);
+app.use("/api", chatRoutes);
 
 // Health check
 app.get("/", (req, res) => {
@@ -39,7 +45,12 @@ app.get("/", (req, res) => {
       "POST /api/simulate",
       "GET  /api/history",
       "GET  /api/drift",
-      "GET  /api/profile"
+      "GET  /api/profile",
+      "POST /api/users/bootstrap",
+      "GET  /api/profiles",
+      "POST /api/profiles",
+      "GET  /api/chat",
+      "POST /api/chat"
     ]
   });
 });
@@ -53,13 +64,23 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`\n🩺 NoRog API Server running on http://localhost:${PORT}`);
-  console.log(`   Health check: http://localhost:${PORT}/`);
-  console.log(`   Predict:      POST http://localhost:${PORT}/api/predict`);
-  console.log(`   Simulate:     POST http://localhost:${PORT}/api/simulate`);
-  console.log(`   History:      GET  http://localhost:${PORT}/api/history`);
-  console.log(`   Drift:        GET  http://localhost:${PORT}/api/drift`);
-  console.log(`   Profile:      GET  http://localhost:${PORT}/api/profile\n`);
-});
+const startServer = async () => {
+  try {
+    await connectDB();
+    app.listen(PORT, () => {
+      console.log(`\n🩺 NoRog API Server running on http://localhost:${PORT}`);
+      console.log(`   Health check: http://localhost:${PORT}/`);
+      console.log(`   Predict:      POST http://localhost:${PORT}/api/predict`);
+      console.log(`   Simulate:     POST http://localhost:${PORT}/api/simulate`);
+      console.log(`   History:      GET  http://localhost:${PORT}/api/history`);
+      console.log(`   Drift:        GET  http://localhost:${PORT}/api/drift`);
+      console.log(`   Profile:      GET  http://localhost:${PORT}/api/profile`);
+      console.log(`   Chat:         POST http://localhost:${PORT}/api/chat\n`);
+    });
+  } catch (error) {
+    console.error("Failed to start server:", error.message);
+    process.exit(1);
+  }
+};
+
+startServer();

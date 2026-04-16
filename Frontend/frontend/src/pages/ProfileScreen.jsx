@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getProfile, getDrift, getHistory } from '../api/client'
 
-export default function ProfileScreen() {
+export default function ProfileScreen({ userContext, activeProfile }) {
   const navigate = useNavigate()
   const [profile, setProfile] = useState(null)
   const [drift, setDrift] = useState(null)
@@ -13,7 +13,9 @@ export default function ProfileScreen() {
     const fetchData = async () => {
       try {
         const [profRes, driftRes, histRes] = await Promise.all([
-          getProfile(), getDrift(), getHistory(10)
+          getProfile({ userId: userContext?.userId, profileId: activeProfile?.id }),
+          getDrift({ userId: userContext?.userId, profileId: activeProfile?.id }),
+          getHistory({ userId: userContext?.userId, profileId: activeProfile?.id, limit: 10 })
         ])
         setProfile(profRes.data)
         setDrift(driftRes.data)
@@ -24,8 +26,8 @@ export default function ProfileScreen() {
         setLoading(false)
       }
     }
-    fetchData()
-  }, [])
+    if (userContext?.userId && activeProfile?.id) fetchData()
+  }, [userContext, activeProfile])
 
   if (loading) {
     return (
@@ -184,21 +186,21 @@ export default function ProfileScreen() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium text-sm truncate">{entry.result?.prediction?.primary || 'Unknown'}</span>
-                    <span className={`text-xs px-2 py-0.5 rounded-full flex-shrink-0 ${
-                      entry.result?.prediction?.confidence === 'High' ? 'bg-[rgba(0,184,148,0.15)] text-[var(--color-success)]' :
-                      entry.result?.prediction?.confidence === 'Moderate' ? 'bg-[rgba(253,203,110,0.15)] text-[var(--color-warning)]' :
-                      'bg-[rgba(225,112,85,0.15)] text-[var(--color-danger)]'
-                    }`}>{entry.result?.prediction?.confidence}</span>
-                  </div>
-                  <div className="text-xs text-[var(--color-text-muted)] truncate mt-0.5">
-                    {entry.symptoms?.join(', ')}
-                  </div>
-                </div>
-                <div className="text-xs text-[var(--color-text-muted)] flex-shrink-0">
-                  {entry.time ? new Date(entry.time).toLocaleDateString() : ''}
-                </div>
-              </div>
+                     <span className="font-medium text-sm truncate">{entry.normalizedConditions?.[0]?.name || 'Unknown'}</span>
+                     <span className={`text-xs px-2 py-0.5 rounded-full flex-shrink-0 ${
+                       entry.confidence === 'High' ? 'bg-[rgba(0,184,148,0.15)] text-[var(--color-success)]' :
+                       entry.confidence === 'Moderate' ? 'bg-[rgba(253,203,110,0.15)] text-[var(--color-warning)]' :
+                       'bg-[rgba(225,112,85,0.15)] text-[var(--color-danger)]'
+                     }`}>{entry.confidence}</span>
+                   </div>
+                   <div className="text-xs text-[var(--color-text-muted)] truncate mt-0.5">
+                     {entry.symptoms?.join(', ')}
+                   </div>
+                 </div>
+                 <div className="text-xs text-[var(--color-text-muted)] flex-shrink-0">
+                   {entry.createdAt ? new Date(entry.createdAt).toLocaleDateString() : ''}
+                 </div>
+               </div>
             ))}
           </div>
         </div>
