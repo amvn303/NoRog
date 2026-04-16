@@ -1,0 +1,232 @@
+@import "tailwindcss";
+
+/* ===== NoRog Design System — Custom Theme ===== */
+
+@theme {
+  --color-bg-primary: #0a0a0f;
+  --color-bg-surface: #12121a;
+  --color-bg-surface-hover: #1a1a2e;
+  --color-bg-surface-alt: #16162a;
+  --color-border: #2a2a40;
+  --color-border-light: #3a3a55;
+
+  --color-brand: #6c5ce7;
+  --color-brand-light: #a29bfe;
+  --color-brand-glow: rgba(108, 92, 231, 0.3);
+
+  --color-accent: #00cec9;
+  --color-accent-glow: rgba(0, 206, 201, 0.3);
+
+  --color-success: #00b894;
+  --color-success-glow: rgba(0, 184, 148, 0.2);
+  --color-warning: #fdcb6e;
+  --color-warning-glow: rgba(253, 203, 110, 0.2);
+  --color-danger: #e17055;
+  --color-danger-glow: rgba(225, 112, 85, 0.2);
+
+  --color-text-primary: #f0f0f5;
+  --color-text-secondary: #8888a0;
+  --color-text-muted: #55556a;
+
+  --font-family-sans: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* ===== Base Styles ===== */
+body {
+  font-family: var(--font-family-sans);
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ===== Scrollbar Styling ===== */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-bg-primary);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-border-light);
+}
+
+/* ===== Glass Card ===== */
+.glass-card {
+  background: rgba(18, 18, 26, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.glass-card:hover {
+  border-color: var(--color-border-light);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+/* ===== Glow Effects ===== */
+.glow-brand {
+  box-shadow: 0 0 20px var(--color-brand-glow), 0 0 60px rgba(108, 92, 231, 0.1);
+}
+.glow-accent {
+  box-shadow: 0 0 20px var(--color-accent-glow), 0 0 60px rgba(0, 206, 201, 0.1);
+}
+.glow-success {
+  box-shadow: 0 0 20px var(--color-success-glow);
+}
+.glow-warning {
+  box-shadow: 0 0 20px var(--color-warning-glow);
+}
+.glow-danger {
+  box-shadow: 0 0 20px var(--color-danger-glow);
+}
+
+/* ===== Animations ===== */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px var(--color-brand-glow); }
+  50% { box-shadow: 0 0 40px var(--color-brand-glow), 0 0 80px rgba(108, 92, 231, 0.15); }
+}
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.5s ease-out forwards;
+}
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+.animate-slide-in-right {
+  animation: slideInRight 0.5s ease-out forwards;
+}
+.animate-pulse-glow {
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+/* Staggered animations */
+.stagger-1 { animation-delay: 0.1s; }
+.stagger-2 { animation-delay: 0.2s; }
+.stagger-3 { animation-delay: 0.3s; }
+.stagger-4 { animation-delay: 0.4s; }
+.stagger-5 { animation-delay: 0.5s; }
+
+/* ===== Gradient Text ===== */
+.gradient-text {
+  background: linear-gradient(135deg, var(--color-brand), var(--color-accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ===== Button Styles ===== */
+.btn-primary {
+  background: linear-gradient(135deg, var(--color-brand), #8b7cf7);
+  color: white;
+  padding: 12px 28px;
+  border-radius: 12px;
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: none;
+  cursor: pointer;
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px var(--color-brand-glow);
+}
+.btn-primary:active {
+  transform: translateY(0);
+}
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-secondary {
+  background: var(--color-bg-surface);
+  color: var(--color-text-primary);
+  padding: 12px 28px;
+  border-radius: 12px;
+  font-weight: 500;
+  border: 1px solid var(--color-border);
+  transition: all 0.3s;
+  cursor: pointer;
+}
+.btn-secondary:hover {
+  background: var(--color-bg-surface-hover);
+  border-color: var(--color-brand);
+}
+
+/* ===== Chip Styles ===== */
+.symptom-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-surface);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
+}
+.symptom-chip:hover {
+  border-color: var(--color-brand);
+  color: var(--color-text-primary);
+  background: var(--color-bg-surface-hover);
+}
+.symptom-chip.selected {
+  background: linear-gradient(135deg, rgba(108, 92, 231, 0.2), rgba(162, 155, 254, 0.1));
+  border-color: var(--color-brand);
+  color: var(--color-brand-light);
+  box-shadow: 0 0 15px rgba(108, 92, 231, 0.15);
+}
+
+/* ===== Risk Gauge ===== */
+.risk-gauge {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+.risk-gauge::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  background: var(--color-bg-primary);
+}
+.risk-gauge.low {
+  background: conic-gradient(var(--color-success) 0% 33%, var(--color-border) 33% 100%);
+}
+.risk-gauge.moderate {
+  background: conic-gradient(var(--color-warning) 0% 60%, var(--color-border) 60% 100%);
+}
+.risk-gauge.high {
+  background: conic-gradient(var(--color-danger) 0% 85%, var(--color-border) 85% 100%);
+}
