@@ -1,17 +1,7 @@
 {
   "name": "norog-backend",
-  "version": "2.0.0",
-  "description": "NoRog — AI-Powered Behavioral Health Intelligence System Backend",
-  "homepage": "https://github.com/amvn303/NoRog#readme",
-  "bugs": {
-    "url": "https://github.com/amvn303/NoRog/issues"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/amvn303/NoRog.git"
-  },
-  "license": "ISC",
-  "author": "Aman",
+  "version": "3.0.0",
+  "description": "NoRog — Proactive Disease Monitoring System Backend",
   "type": "module",
   "main": "index.js",
   "scripts": {
@@ -20,11 +10,14 @@
   },
   "dependencies": {
     "axios": "^1.15.0",
+    "bcryptjs": "^2.4.3",
     "cors": "^2.8.6",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.23.0",
-    "openai": "^6.34.0"
+    "multer": "^1.4.5-lts.1",
+    "pdfkit": "^0.16.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"

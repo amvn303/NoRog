@@ -1,23 +1,37 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
+import fs from "fs";
 
-import predictRoutes from "./routes/predict.js";
-import simulateRoutes from "./routes/simulate.js";
-import historyRoutes from "./routes/history.js";
-import driftRoutes from "./routes/drift.js";
+import authRoutes from "./routes/auth.js";
 import profileRoutes from "./routes/profile.js";
-import chatRoutes from "./routes/chat.js";
+import symptomRoutes from "./routes/symptoms.js";
+import aiRoutes from "./routes/ai.js";
+import medicineRoutes from "./routes/medicines.js";
+import reportRoutes from "./routes/report.js";
 import { connectDB } from "./config/db.js";
 
 dotenv.config();
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Ensure uploads directory exists
+const uploadsDir = path.join(__dirname, "uploads");
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
 // Middleware
-app.use(cors());
-app.use(express.json());
+app.use(cors({
+  origin: ["http://localhost:5173", "http://localhost:3000"],
+  credentials: true
+}));
+app.use(express.json({ limit: "10mb" }));
+app.use("/uploads", express.static(uploadsDir));
 
 // Request logger
 app.use((req, res, next) => {
@@ -26,31 +40,32 @@ app.use((req, res, next) => {
 });
 
 // API Routes
-app.use("/api", predictRoutes);
-app.use("/api", simulateRoutes);
-app.use("/api", historyRoutes);
-app.use("/api", driftRoutes);
-app.use("/api", profileRoutes);
-app.use("/api", chatRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/profile", profileRoutes);
+app.use("/api/symptoms", symptomRoutes);
+app.use("/api/ai", aiRoutes);
+app.use("/api/medicines", medicineRoutes);
+app.use("/api/report", reportRoutes);
 
 // Health check
 app.get("/", (req, res) => {
   res.json({
     name: "NoRog API",
-    version: "2.0.0",
+    version: "3.0.0",
     status: "running",
-    description: "AI-Powered Behavioral Health Intelligence System",
+    description: "Proactive Disease Monitoring System",
     endpoints: [
-      "POST /api/predict",
-      "POST /api/simulate",
-      "GET  /api/history",
-      "GET  /api/drift",
+      "POST /api/auth/register",
+      "POST /api/auth/login",
       "GET  /api/profile",
-      "POST /api/users/bootstrap",
-      "GET  /api/profiles",
-      "POST /api/profiles",
-      "GET  /api/chat",
-      "POST /api/chat"
+      "POST /api/profile",
+      "POST /api/symptoms/log",
+      "GET  /api/symptoms/history",
+      "POST /api/ai/predict",
+      "POST /api/ai/whatif",
+      "POST /api/ai/seasonal",
+      "POST /api/medicines/check",
+      "GET  /api/report/generate"
     ]
   });
 });
@@ -68,14 +83,13 @@ const startServer = async () => {
   try {
     await connectDB();
     app.listen(PORT, () => {
-      console.log(`\n🩺 NoRog API Server running on http://localhost:${PORT}`);
-      console.log(`   Health check: http://localhost:${PORT}/`);
-      console.log(`   Predict:      POST http://localhost:${PORT}/api/predict`);
-      console.log(`   Simulate:     POST http://localhost:${PORT}/api/simulate`);
-      console.log(`   History:      GET  http://localhost:${PORT}/api/history`);
-      console.log(`   Drift:        GET  http://localhost:${PORT}/api/drift`);
-      console.log(`   Profile:      GET  http://localhost:${PORT}/api/profile`);
-      console.log(`   Chat:         POST http://localhost:${PORT}/api/chat\n`);
+      console.log(`\n🩺 NoRog API Server v3.0 running on http://localhost:${PORT}`);
+      console.log(`   Auth:      POST http://localhost:${PORT}/api/auth/register | login`);
+      console.log(`   Profile:   GET/POST http://localhost:${PORT}/api/profile`);
+      console.log(`   Symptoms:  POST http://localhost:${PORT}/api/symptoms/log`);
+      console.log(`   AI:        POST http://localhost:${PORT}/api/ai/predict | whatif | seasonal`);
+      console.log(`   Medicines: POST http://localhost:${PORT}/api/medicines/check`);
+      console.log(`   Report:    GET  http://localhost:${PORT}/api/report/generate\n`);
     });
   } catch (error) {
     console.error("Failed to start server:", error.message);

@@ -1,44 +1,35 @@
 import mongoose from "mongoose";
 
-const BehaviorPatternSchema = new mongoose.Schema(
-  {
-    pattern: { type: String, required: true },
-    score: { type: Number, default: 1 },
-    lastSeenAt: { type: Date, default: Date.now }
-  },
-  { _id: false }
-);
-
-const HabitSchema = new mongoose.Schema(
-  {
-    screenTime: { type: String, default: "" },
-    sleepQuality: { type: String, default: "" },
-    focusLevel: { type: String, default: "" },
-    exerciseFrequency: { type: String, default: "" },
-    dietQuality: { type: String, default: "" },
-    stressLevel: { type: String, default: "" }
-  },
-  { _id: false }
-);
-
 const HealthProfileSchema = new mongoose.Schema(
   {
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true },
-    label: {
-      type: String,
-      enum: ["self", "father", "mother", "sibling", "other"],
-      default: "self"
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, unique: true, index: true },
+    currentSymptoms: { type: [String], default: [] },
+    medicalHistory: { type: [String], default: [] },
+    familyHistory: [
+      {
+        relation: { type: String },
+        condition: { type: String },
+        _id: false
+      }
+    ],
+    lifestyle: {
+      smoker: { type: Boolean, default: false },
+      alcohol: { type: String, enum: ["none", "occasional", "regular"], default: "none" },
+      exerciseFrequency: { type: String, enum: ["never", "1-2x", "3-5x", "daily"], default: "never" },
+      sleepHours: { type: Number, default: 7 },
+      diet: { type: String, default: "balanced" }
     },
-    displayName: { type: String, required: true, trim: true },
-    age: { type: Number, min: 0, max: 120 },
-    habits: { type: HabitSchema, default: () => ({}) },
-    lifestyle: { type: [String], default: [] },
-    pastConditions: { type: [String], default: [] },
-    behaviorPatterns: { type: [BehaviorPatternSchema], default: [] },
-    chatSummary: { type: String, default: "" }
+    medicines: [
+      {
+        name: { type: String },
+        dosage: { type: String },
+        frequency: { type: String },
+        _id: false
+      }
+    ],
+    onboardingComplete: { type: Boolean, default: false }
   },
   { timestamps: true }
 );
 
 export default mongoose.model("HealthProfile", HealthProfileSchema);
-

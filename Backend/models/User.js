@@ -2,12 +2,17 @@ import mongoose from "mongoose";
 
 const UserSchema = new mongoose.Schema(
   {
-    externalId: { type: String, required: true, unique: true, index: true },
     name: { type: String, required: true, trim: true },
-    profiles: [{ type: mongoose.Schema.Types.ObjectId, ref: "HealthProfile" }]
+    email: { type: String, required: true, unique: true, lowercase: true, trim: true },
+    password: { type: String, required: true },
+    age: { type: Number },
+    gender: { type: String, enum: ["male", "female", "other", ""] },
+    location: {
+      city: { type: String, default: "" },
+      country: { type: String, default: "" }
+    }
   },
   { timestamps: true }
 );
 
 export default mongoose.model("User", UserSchema);
-
